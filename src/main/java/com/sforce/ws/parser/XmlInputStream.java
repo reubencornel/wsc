@@ -144,7 +144,10 @@ public final class XmlInputStream {
 
   @Override
   public String toString() {
-    return "Empty";
+    if (parser == null ) {
+      return "Parser not setup yet.";
+    }
+    return parser.toString();
   }
 
   public String nextText() throws IOException, ConnectionException {

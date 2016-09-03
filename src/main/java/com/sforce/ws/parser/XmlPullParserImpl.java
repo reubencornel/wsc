@@ -1,14 +1,35 @@
+/*
+ * Copyright (c) 2013, salesforce.com, inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification, are permitted provided
+ * that the following conditions are met:
+ *
+ *    Redistributions of source code must retain the above copyright notice, this list of conditions and the
+ *    following disclaimer.
+ *
+ *    Redistributions in binary form must reproduce the above copyright notice, this list of conditions and
+ *    the following disclaimer in the documentation and/or other materials provided with the distribution.
+ *
+ *    Neither the name of salesforce.com, inc. nor the names of its contributors may be used to endorse or
+ *    promote products derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 package com.sforce.ws.parser;
 
-import com.google.appengine.repackaged.com.google.common.collect.ImmutableMap;
-
-import javax.xml.stream.Location;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -17,7 +38,9 @@ import java.util.Map;
 public class XmlPullParserImpl implements XmlPullParser {
 
     XMLInputFactory factory = XMLInputFactory.newFactory();
-    Map<String, String> featureMapping = ImmutableMap.of("http://xmlpull.org/v1/doc/features.html#process-namespaces", "javax.xml.stream.isNamespaceAware");
+    Map<String, String> featureMapping = new HashMap<String, String>(){{
+        put("http://xmlpull.org/v1/doc/features.html#process-namespaces", "javax.xml.stream.isNamespaceAware");
+    }};
     XMLStreamReader reader = null;
 
     @Override
@@ -56,6 +79,7 @@ public class XmlPullParserImpl implements XmlPullParser {
     @Override
     public void setInput(InputStream inputStream, String inputEncoding) throws XmlPullParserException {
         try {
+            factory.setProperty("javax.xml.stream.isCoalescing", true);
             reader = factory.createXMLStreamReader(inputStream, inputEncoding);
         } catch (XMLStreamException e) {
             throw new XmlPullParserException(e.getMessage());
@@ -202,9 +226,7 @@ public class XmlPullParserImpl implements XmlPullParser {
     @Override
     public int next() throws XmlPullParserException, IOException {
         try {
-            int returnTag =reader.next();
-            System.out.println("TAG(next): " + returnTag);
-            return returnTag;
+            return reader.next();
         } catch (XMLStreamException e) {
             throw new XmlPullParserException(e.getMessage());
         }
@@ -226,26 +248,44 @@ public class XmlPullParserImpl implements XmlPullParser {
 
     @Override
     public String nextText() throws XmlPullParserException, IOException {
-        try {
-            reader.next();
-            String returnStr = reader.getText();
-
-            reader.next();
-            return returnStr;
-        } catch (XMLStreamException e) {
-            throw new XmlPullParserException(e.getMessage());
-        }
-
+            if (getEventType() != XMLStreamConstants.START_ELEMENT) {
+                throw new XmlPullParserException("parser must be on start tag");
+            }
+            int eventType = next();
+            if (eventType == XMLStreamConstants.CDATA || eventType == XMLStreamConstants.CHARACTERS) {
+                String result = reader.getText();
+                eventType = next();
+                if (eventType != XMLStreamConstants.END_ELEMENT) {
+                    throw new XmlPullParserException("Event Text must be followed by end tag");
+                }
+                return result;
+            } else if (eventType == XMLStreamConstants.END_ELEMENT) {
+                return "";
+            } else {
+                throw new XmlPullParserException("Event must be on start tag to read text.");
+            }
     }
 
     @Override
     public int nextTag() throws XmlPullParserException, IOException {
         try {
-            int returnTag =reader.nextTag();
-            System.out.println("TAG(nextTag): " + returnTag);
-            return returnTag;
+            return reader.nextTag();
+
         } catch (XMLStreamException e) {
             throw new XmlPullParserException(e.getMessage());
+        }
+    }
+
+    @Override
+    public String toString(){
+        int eventType = reader.getEventType();
+        System.out.println(eventType);
+        switch (eventType) {
+            case XMLStreamConstants.START_ELEMENT : return " Start Element: " + reader.getName().toString();
+            case XMLStreamConstants.END_ELEMENT: return "End Element: " + reader.getName().toString();
+            case XMLStreamConstants.START_DOCUMENT: return "Document Start";
+            case XMLStreamConstants.END_DOCUMENT: return "End Document";
+            default: return "TEXT:" + reader.getText();
         }
     }
 }
