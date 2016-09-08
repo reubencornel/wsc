@@ -33,7 +33,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by rcornel on 9/2/16.
+ * This class is a wrapper around XmlStreamReader. All most all calls are delegated to the stream reader.
+ *
+ * @author rcornel
  */
 public class XmlPullParserImpl implements XmlPullParser {
 
@@ -155,7 +157,6 @@ public class XmlPullParserImpl implements XmlPullParser {
     @Override
     public char[] getTextCharacters(int[] holderForStartAndLength) {
         throw new UnsupportedOperationException();
-        // Not implemented;
     }
 
     @Override

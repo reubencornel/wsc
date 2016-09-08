@@ -34,160 +34,158 @@ import com.sforce.ws.ConnectionException;
 import javax.xml.stream.XMLStreamConstants;
 
 /**
- * This is a minimal pull parser. It currently delegates to XPP parser available at
- * http://www.extreme.indiana.edu/xgws/xsoap/xpp/
+ * This class is a facade for the xml parsers we actually use.
  *
- * @author  http://cheenath.com
- * @version 1.0
+ * @author  mcheenath, rcornel
  * @since   1.0   Nov 5, 2005
  */
 public final class XmlInputStream {
 
-  private XmlPullParser parser = new XmlPullParserImpl();
+    private XmlPullParser parser = new XmlPullParserImpl();
 
-  public static final int END_DOCUMENT = XMLStreamConstants.END_DOCUMENT; //XmlPullParser.END_DOCUMENT;
-  public static final int START_DOCUMENT = XMLStreamConstants.START_DOCUMENT; //XmlPullParser.START_DOCUMENT;
-  public static final int START_TAG = XMLStreamConstants.START_ELEMENT; //XmlPullParser.START_TAG;
-  public static final int END_TAG = XMLStreamConstants.END_ELEMENT; //XmlPullParser.END_TAG;
-  public static final int TEXT = XMLStreamConstants.CHARACTERS; //XmlPullParser.TEXT;
+    public static final int END_DOCUMENT = XMLStreamConstants.END_DOCUMENT; //XmlPullParser.END_DOCUMENT;
+    public static final int START_DOCUMENT = XMLStreamConstants.START_DOCUMENT; //XmlPullParser.START_DOCUMENT;
+    public static final int START_TAG = XMLStreamConstants.START_ELEMENT; //XmlPullParser.START_TAG;
+    public static final int END_TAG = XMLStreamConstants.END_ELEMENT; //XmlPullParser.END_TAG;
+    public static final int TEXT = XMLStreamConstants.CHARACTERS; //XmlPullParser.TEXT;
 
-  private static final int EMPTY = -99999;
-  private final static String EMPTY_STRING = "";
+    private static final int EMPTY = -99999;
+    private final static String EMPTY_STRING = "";
 
-  private int peekTag = EMPTY;
+    private int peekTag = EMPTY;
 
-  public XmlInputStream() {
-    try {
-      parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
-    } catch (XmlPullParserException e) {
-      throw new InternalError("Unable to set feature:" + e);
-    }
-  }
-
-  public void setInput(InputStream inputStream, String inputEncoding) throws PullParserException {
-    parser.setInput(inputStream, inputEncoding);
-  }
-
-  public String getNamespace(String prefix) {
-    return parser.getNamespace(prefix);
-  }
-
-  public String getPositionDescription() {
-    return parser.getPositionDescription();
-  }
-
-  public int getLineNumber() {
-      return parser.getLineNumber();
-  }
-
-  public int getColumnNumber() {
-      return parser.getColumnNumber();
-  }
-
-  public String getNamespace() {
-    return parser.getNamespace() == null ? EMPTY_STRING : parser.getNamespace();
-  }
-
-  public String getName() {
-    return parser.getName();
-  }
-
-  public String getAttributeValue(String namespace, String name) {
-    return parser.getAttributeValue(namespace, name);
-  }
-
-  public int getAttributeCount() {
-      return parser.getAttributeCount();
-  }
-
-  public String getAttributeValue(int index) {
-      return parser.getAttributeValue(index);
-  }
-
-  public String getAttributeName(int index) {
-      return parser.getAttributeName(index);
-  }
-
-  public String getAttributeNamespace(int index) {
-      return parser.getAttributeNamespace(index) == null ? EMPTY_STRING : parser.getAttributeNamespace(index) ;
-  }
-
-  public void consumePeeked() {
-      peekTag = EMPTY;
-  }
-
-  public int getEventType() throws ConnectionException{
-    if (peekTag != EMPTY) {
-      return peekTag;
-    } else {
+    public XmlInputStream() {
         try {
-            return parser.getEventType();
+            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
         } catch (XmlPullParserException e) {
-            throw new ConnectionException("Failed to get event type", e);
+            throw new InternalError("Unable to set feature:" + e);
         }
     }
-  }
 
-  public int next() throws IOException, ConnectionException {
-    if (peekTag != EMPTY) {
-      int t = peekTag;
-      peekTag = EMPTY;
-      return t;
+    public void setInput(InputStream inputStream, String inputEncoding) throws PullParserException {
+        parser.setInput(inputStream, inputEncoding);
     }
 
-    try {
-      return parser.next();
-    } catch (XmlPullParserException e) {
-      throw new ConnectionException("Found invalid XML. " + e.getMessage(), e);
-    }
-  }
-
-  @Override
-  public String toString() {
-    if (parser == null ) {
-      return "Parser not setup yet.";
-    }
-    return parser.toString();
-  }
-
-  public String nextText() throws IOException, ConnectionException {
-    try {
-      return parser.nextText();
-    } catch (XmlPullParserException e) {
-      throw new ConnectionException("Failed to get text", e);
-    }
-  }
-
-  public String getText() {
-      return parser.getText();
-  }
-
-  public int nextTag() throws IOException, ConnectionException {
-    if (peekTag != EMPTY) {
-      int t = peekTag;
-      peekTag = EMPTY;
-      return t;
+    public String getNamespace(String prefix) {
+        return parser.getNamespace(prefix);
     }
 
-    try {
-      return parser.nextTag();
-    } catch (XmlPullParserException e) {
-      throw new ConnectionException("Failed to get next element", e);
-    }
-  }
-
-  public int peekTag() throws ConnectionException, IOException {
-    if (peekTag != EMPTY) {
-      return peekTag;
+    public String getPositionDescription() {
+        return parser.getPositionDescription();
     }
 
-    peekTag = nextTag();
-    return peekTag;
-  }
-  
-  public int peek() throws ConnectionException, IOException {
-      if (peekTag != EMPTY) {
-          return peekTag;
+    public int getLineNumber() {
+        return parser.getLineNumber();
+    }
+
+    public int getColumnNumber() {
+        return parser.getColumnNumber();
+    }
+
+    public String getNamespace() {
+        return parser.getNamespace() == null ? EMPTY_STRING : parser.getNamespace();
+    }
+
+    public String getName() {
+        return parser.getName();
+    }
+
+    public String getAttributeValue(String namespace, String name) {
+        return parser.getAttributeValue(namespace, name);
+    }
+
+    public int getAttributeCount() {
+        return parser.getAttributeCount();
+    }
+
+    public String getAttributeValue(int index) {
+        return parser.getAttributeValue(index);
+    }
+
+    public String getAttributeName(int index) {
+        return parser.getAttributeName(index);
+    }
+
+    public String getAttributeNamespace(int index) {
+        return parser.getAttributeNamespace(index) == null ? EMPTY_STRING : parser.getAttributeNamespace(index) ;
+    }
+
+    public void consumePeeked() {
+        peekTag = EMPTY;
+    }
+
+    public int getEventType() throws ConnectionException{
+        if (peekTag != EMPTY) {
+            return peekTag;
+        } else {
+            try {
+                return parser.getEventType();
+            } catch (XmlPullParserException e) {
+                throw new ConnectionException("Failed to get event type", e);
+            }
+        }
+    }
+
+    public int next() throws IOException, ConnectionException {
+        if (peekTag != EMPTY) {
+            int t = peekTag;
+            peekTag = EMPTY;
+            return t;
+        }
+
+        try {
+            return parser.next();
+        } catch (XmlPullParserException e) {
+            throw new ConnectionException("Found invalid XML. " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public String toString() {
+        if (parser == null ) {
+            return "Parser not setup yet.";
+        }
+        return parser.toString();
+    }
+
+    public String nextText() throws IOException, ConnectionException {
+        try {
+            return parser.nextText();
+        } catch (XmlPullParserException e) {
+            throw new ConnectionException("Failed to get text", e);
+        }
+    }
+
+    public String getText() {
+        return parser.getText();
+    }
+
+    public int nextTag() throws IOException, ConnectionException {
+        if (peekTag != EMPTY) {
+            int t = peekTag;
+            peekTag = EMPTY;
+            return t;
+        }
+
+        try {
+            return parser.nextTag();
+        } catch (XmlPullParserException e) {
+            throw new ConnectionException("Failed to get next element", e);
+        }
+    }
+
+    public int peekTag() throws ConnectionException, IOException {
+        if (peekTag != EMPTY) {
+            return peekTag;
+        }
+
+        peekTag = nextTag();
+        return peekTag;
+    }
+
+    public int peek() throws ConnectionException, IOException {
+        if (peekTag != EMPTY) {
+            return peekTag;
         }
 
         int peek = next();
