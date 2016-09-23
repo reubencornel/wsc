@@ -25,13 +25,10 @@
  */
 package com.sforce.ws.parser;
 
-import com.sun.org.apache.xerces.internal.util.NamespaceContextWrapper;
-
 import javax.xml.stream.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 

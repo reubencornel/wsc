@@ -91,7 +91,6 @@ public final class XmlInputStream {
     }
 
     public String getNamespace() {
-       // return parser.getNamespace() == null ? EMPTY_STRING : parser.getNamespace();
         return parser.getNamespace() == null ? EMPTY_STRING : parser.getNamespace();
     }
 
