@@ -42,12 +42,20 @@ import javax.xml.stream.XMLStreamConstants;
 public final class XmlInputStream {
 
     private XmlPullParser parser = new XmlPullParserImpl();
+    public static final int END_DOCUMENT = XMLStreamConstants.END_DOCUMENT;
+    public static final int START_DOCUMENT = XMLStreamConstants.START_DOCUMENT;
+    public static final int START_TAG = XMLStreamConstants.START_ELEMENT;
+    public static final int END_TAG = XMLStreamConstants.END_ELEMENT;
+    public static final int TEXT = XMLStreamConstants.CHARACTERS;
 
-    public static final int END_DOCUMENT = XMLStreamConstants.END_DOCUMENT; //XmlPullParser.END_DOCUMENT;
-    public static final int START_DOCUMENT = XMLStreamConstants.START_DOCUMENT; //XmlPullParser.START_DOCUMENT;
-    public static final int START_TAG = XMLStreamConstants.START_ELEMENT; //XmlPullParser.START_TAG;
-    public static final int END_TAG = XMLStreamConstants.END_ELEMENT; //XmlPullParser.END_TAG;
-    public static final int TEXT = XMLStreamConstants.CHARACTERS; //XmlPullParser.TEXT;
+
+//    private XmlPullParser parser = new MXParser();
+//    public static final int END_DOCUMENT = XmlPullParser.START_DOCUMENT;
+//    public static final int START_DOCUMENT = XmlPullParser.END_DOCUMENT;
+//    public static final int START_TAG = XmlPullParser.START_TAG;
+//    public static final int END_TAG = XmlPullParser.END_TAG;
+//    public static final int TEXT = XmlPullParser.TEXT;
+
 
     private static final int EMPTY = -99999;
     private final static String EMPTY_STRING = "";
@@ -83,6 +91,7 @@ public final class XmlInputStream {
     }
 
     public String getNamespace() {
+       // return parser.getNamespace() == null ? EMPTY_STRING : parser.getNamespace();
         return parser.getNamespace() == null ? EMPTY_STRING : parser.getNamespace();
     }
 

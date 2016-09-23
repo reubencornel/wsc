@@ -56,6 +56,7 @@ import java.io.UnsupportedEncodingException;
  * @author <a href="http://www.extreme.indiana.edu/~aslom/">Aleksander Slominski</a>
  */
 
+@Deprecated
 public class MXParser
     implements XmlPullParser {
   //NOTE: no interning of those strings --> by Java lang spec they MUST be already interned

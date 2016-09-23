@@ -25,10 +25,13 @@
  */
 package com.sforce.ws.parser;
 
+import com.sun.org.apache.xerces.internal.util.NamespaceContextWrapper;
+
 import javax.xml.stream.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,14 +42,23 @@ import java.util.Map;
  */
 public class XmlPullParserImpl implements XmlPullParser {
 
-    XMLInputFactory factory = XMLInputFactory.newFactory();
+    private static XMLInputFactory factory = null;
+    static {
+        factory = XMLInputFactory.newFactory();
+        factory.setProperty("javax.xml.stream.isCoalescing", true);
+        factory.setProperty("javax.xml.stream.isReplacingEntityReferences", false);
+        factory.setProperty("javax.xml.stream.supportDTD", false);
+    }
+
     Map<String, String> featureMapping = new HashMap<String, String>(){{
         put("http://xmlpull.org/v1/doc/features.html#process-namespaces", "javax.xml.stream.isNamespaceAware");
     }};
+
     XMLStreamReader reader = null;
 
     @Override
     public void setFeature(String name, boolean state) throws XmlPullParserException {
+
         String staxName = featureMapping.get(name);
         if (staxName == null) {
             throw new XmlPullParserException("Unrecognized feature");
@@ -75,16 +87,19 @@ public class XmlPullParserImpl implements XmlPullParser {
 
     @Override
     public void setInput(Reader in) throws XmlPullParserException {
-
+        try {
+            reader = factory.createXMLStreamReader(in);
+        } catch (XMLStreamException e) {
+            throw new XmlPullParserException(e.getMessage(), this, e);
+        }
     }
 
     @Override
     public void setInput(InputStream inputStream, String inputEncoding) throws XmlPullParserException {
         try {
-            factory.setProperty("javax.xml.stream.isCoalescing", true);
             reader = factory.createXMLStreamReader(inputStream, inputEncoding);
         } catch (XMLStreamException e) {
-            throw new XmlPullParserException(e.getMessage());
+            throw new XmlPullParserException(e.getMessage(), this, e);
         }
     }
 
@@ -115,12 +130,17 @@ public class XmlPullParserImpl implements XmlPullParser {
 
     @Override
     public String getNamespace(String prefix) {
-        return reader.getNamespaceURI(prefix);
+        if (prefix == null) {
+            return reader.getNamespaceContext().getNamespaceURI("");
+        }
+        return reader.getNamespaceContext().getNamespaceURI(prefix);
     }
 
     @Override
     public int getDepth() {
-        throw new UnsupportedOperationException();    }
+        // Depth is not supported by xml stream reader
+        throw new UnsupportedOperationException();
+    }
 
     @Override
     public String getPositionDescription() {
@@ -269,21 +289,22 @@ public class XmlPullParserImpl implements XmlPullParser {
 
     @Override
     public int nextTag() throws XmlPullParserException, IOException {
-        try {
-            return reader.nextTag();
-
-        } catch (XMLStreamException e) {
-            throw new XmlPullParserException(e.getMessage());
+        int eventType = next();
+        if(eventType == XMLStreamConstants.CHARACTERS &&  isWhitespace()) {   // skip whitespace
+            eventType = next();
         }
+        if (eventType != XMLStreamConstants.START_ELEMENT &&  eventType != XMLStreamConstants.END_ELEMENT) {
+            throw new XmlPullParserException("expected start or end tag", this, null);
+        }
+        return eventType;
     }
 
     @Override
     public String toString(){
         int eventType = reader.getEventType();
-        System.out.println(eventType);
         switch (eventType) {
-            case XMLStreamConstants.START_ELEMENT : return " Start Element: " + reader.getName().toString();
-            case XMLStreamConstants.END_ELEMENT: return "End Element: " + reader.getName().toString();
+            case XMLStreamConstants.START_ELEMENT : return " Start Element: " + reader.getName().toString() + " : " + getPositionDescription();
+            case XMLStreamConstants.END_ELEMENT: return "End Element: " + reader.getName().toString( )+ ":" + getPositionDescription();
             case XMLStreamConstants.START_DOCUMENT: return "Document Start";
             case XMLStreamConstants.END_DOCUMENT: return "End Document";
             default: return "TEXT:" + reader.getText();
